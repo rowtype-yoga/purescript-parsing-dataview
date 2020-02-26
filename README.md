@@ -10,7 +10,7 @@ DataViews on Javascript ArrayBuffers with the package
 This module brings __purescript-parsing__ into rough feature parity
 with __Megaparsec__:
 
-| Built-in stream support | purescript-parsing | Megaparsec |
+| Stream type | purescript-parsing | Megaparsec |
 |----|-----|----|
 | UTF-16 strings | String | Text |
 | Listy strings | Token | String |
@@ -18,9 +18,7 @@ with __Megaparsec__:
 
 ## Installation
 
-```
-bower install purescript-parsing-dataview
-```
+~`bower install purescript-parsing-dataview`~
 
 ## Documentation
 
