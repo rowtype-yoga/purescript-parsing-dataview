@@ -1,0 +1,10 @@
+/.*
+!/.gitignore
+!/.github
+!/.jscsrc
+!/.jshintrc
+!/.travis.yml
+/bower_components/
+/generated-docs/
+/node_modules/
+/output/
