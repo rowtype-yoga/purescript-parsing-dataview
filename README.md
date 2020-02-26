@@ -19,7 +19,7 @@ with __Megaparsec__:
 ## Installation
 
 ```
-bower install purescript-parsing-dataview
+bower install jamesdbrock/purescript-parsing-dataview --save
 ```
 
 ## Documentation
