@@ -1,0 +1,40 @@
+{
+  "name": "purescript-parsing",
+  "homepage": "https://github.com/purescript-contrib/purescript-parsing",
+  "description": "Parser combinator library",
+  "keywords": [
+    "purescript"
+  ],
+  "license": "BSD-3-Clause",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/purescript-contrib/purescript-parsing.git"
+  },
+  "ignore": [
+    "**/.*",
+    "bower_components",
+    "node_modules",
+    "output",
+    "test",
+    "bower.json",
+    "package.json"
+  ],
+  "dependencies": {
+    "purescript-arrays": "^5.0.0",
+    "purescript-either": "^4.0.0",
+    "purescript-foldable-traversable": "^4.0.0",
+    "purescript-identity": "^4.0.0",
+    "purescript-integers": "^4.0.0",
+    "purescript-lists": "^5.0.0",
+    "purescript-maybe": "^4.0.0",
+    "purescript-strings": "^4.0.0",
+    "purescript-transformers": "^4.1.0",
+    "purescript-unicode": "^4.0.0",
+    "purescript-arraybuffer": "^10.0.0"
+  },
+  "devDependencies": {
+    "purescript-assert": "^4.0.0",
+    "purescript-console": "^4.1.0",
+    "purescript-psci-support": "^4.0.0"
+  }
+}
