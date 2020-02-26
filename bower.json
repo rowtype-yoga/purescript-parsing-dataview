@@ -1,14 +1,14 @@
 {
-  "name": "purescript-parsing",
-  "homepage": "https://github.com/purescript-contrib/purescript-parsing",
-  "description": "Parser combinator library",
+  "name": "purescript-parsing-dataview",
+  "homepage": "https://github.com/jamesdbrock/purescript-parsing-dataview",
+  "description": "ArrayBuffer DataView input stream support for purescript-parsing",
   "keywords": [
     "purescript"
   ],
   "license": "BSD-3-Clause",
   "repository": {
     "type": "git",
-    "url": "git://github.com/purescript-contrib/purescript-parsing.git"
+    "url": "git://github.com/jamesdbrock/purescript-parsing-dataview.git"
   },
   "ignore": [
     "**/.*",
@@ -20,16 +20,7 @@
     "package.json"
   ],
   "dependencies": {
-    "purescript-arrays": "^5.0.0",
-    "purescript-either": "^4.0.0",
-    "purescript-foldable-traversable": "^4.0.0",
-    "purescript-identity": "^4.0.0",
-    "purescript-integers": "^4.0.0",
-    "purescript-lists": "^5.0.0",
-    "purescript-maybe": "^4.0.0",
-    "purescript-strings": "^4.0.0",
-    "purescript-transformers": "^4.1.0",
-    "purescript-unicode": "^4.0.0",
+    "purescript-parsing": "^5.0.0",
     "purescript-arraybuffer": "^10.0.0"
   },
   "devDependencies": {
