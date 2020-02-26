@@ -1,4 +1,4 @@
-# purescript-parsing
+# purescript-parsing-dataview
 
 [![Build status](https://travis-ci.org/jamesdbrock/purescript-parsing-dataview.svg?branch=master)](https://travis-ci.org/jamesdbrock/purescript-parsing-dataview)
 [![Pursuit](http://pursuit.purescript.org/packages/purescript-parsing-dataview/badge)](http://pursuit.purescript.org/packages/purescript-parsing-dataview/)
