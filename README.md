@@ -18,7 +18,9 @@ with __Megaparsec__:
 
 ## Installation
 
-~`bower install purescript-parsing-dataview`~
+```
+bower install purescript-parsing-dataview
+```
 
 ## Documentation
 
