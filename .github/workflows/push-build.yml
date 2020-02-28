@@ -9,9 +9,11 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+    - uses: actions/setup-node@v1
     - name: build
       run: |
         npm install bower
         npm install
+        set PATH=${PATH}:$(npm bin)
         bower install
         npm run -s build
