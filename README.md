@@ -1,6 +1,6 @@
 # purescript-parsing-dataview
 
-[![Build status](https://travis-ci.org/jamesdbrock/purescript-parsing-dataview.svg?branch=master)](https://travis-ci.org/jamesdbrock/purescript-parsing-dataview)
+[![CI](https://github.com/jamesdbrock/purescript-parsing-dataview/workflows/CI/badge.svg?branch=master)](https://github.com/jamesdbrock/purescript-parsing-dataview/actions)
 [![Pursuit](http://pursuit.purescript.org/packages/purescript-parsing-dataview/badge)](http://pursuit.purescript.org/packages/purescript-parsing-dataview/)
 
 The module `Text.Parsing.Parser.DataView` provides primitive parsers for parsing
