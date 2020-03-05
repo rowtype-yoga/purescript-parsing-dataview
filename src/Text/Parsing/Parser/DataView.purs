@@ -270,7 +270,7 @@ satisfyFloat64le = satisfy LE (AProxy :: AProxy Float64)
 -- |
 -- | Parse three bytes.
 -- |
--- |     takeViewN 3
+-- |     takeN 3
 -- |
 takeN :: forall m. MonadEffect m => ByteLength -> ParserT DataView m DataView
 takeN n = do
