@@ -3,18 +3,22 @@
 [![CI](https://github.com/jamesdbrock/purescript-parsing-dataview/workflows/CI/badge.svg?branch=master)](https://github.com/jamesdbrock/purescript-parsing-dataview/actions)
 [![Pursuit](http://pursuit.purescript.org/packages/purescript-parsing-dataview/badge)](http://pursuit.purescript.org/packages/purescript-parsing-dataview/)
 
-The module `Text.Parsing.Parser.DataView` provides primitive parsers for parsing
-DataViews on Javascript ArrayBuffers with the package
+Primitive parsers for parsing
+`DataView`s on Javascript `ArrayBuffer`s with the package
 [__purescript-parsing__](https://pursuit.purescript.org/packages/purescript-parsing/).
 
-This module brings the input stream support of __purescript-parsing__ to be
-able to roughly match the built-in stream support of __Megaparsec__:
+With this package, the input stream support of __purescript-parsing__
+roughly matches the built-in stream support of __Megaparsec__:
 
 | Stream type | purescript-parsing | Megaparsec |
 |----|-----|----|
 | UTF-16 strings | String | Text |
 | Listy strings | Token | String |
 | Binary blobs | __Text.Parsing.Parser.DataView__ | ByteString |
+
+Perhaps some day this package can be
+[merged into __purescript-parsing__](https://github.com/purescript-contrib/purescript-parsing/issues/88),
+but for now it has too many non-*purescript-contrib* dependencies.
 
 ## Usage examples
 
@@ -74,7 +78,7 @@ where
     let buffer     = Data.ArrayBuffer.DataView.buffer dv
         byteOffset = Data.ArrayBuffer.DataView.byteOffset dv
         byteLength = Data.ArrayBuffer.DataView.byteLength dv
-    pure $ Data.ArrayBuffer.Typed.part buffer byteOffset byteLength
+    Data.ArrayBuffer.Typed.part buffer byteOffset byteLength
 ```
 
 ## Serialization
