@@ -10,9 +10,8 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v1
-    - run: npm install -g bower
+    - run: npm install -g purescript
+    - run: npm install -g spago
     - name: build
       run: |
-        npm install
-        bower install
-        npm run -s build
+        spago -x test.dhall test
