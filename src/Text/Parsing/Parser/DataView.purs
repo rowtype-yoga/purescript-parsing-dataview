@@ -1,22 +1,22 @@
 -- | Primitive parsers for parsing Javascript ArrayBuffers with the
--- | `Text.Parsing.Parser` module in package __purescript-parsing__.
+-- | [`Text.Parsing.Parser`](https://pursuit.purescript.org/packages/purescript-parsing/docs/Text.Parsing.Parser)
+-- | module in package __purescript-parsing__.
+-- | See the package README for usage examples.
 -- |
 -- | All of the parsers in this module operate on an input stream of
--- | `Data.ArrayBuffer.Types.DataView`, which represents a range of an
+-- | [`Data.ArrayBuffer.Types.DataView`](https://pursuit.purescript.org/packages/purescript-arraybuffer-types/docs/Data.ArrayBuffer.Types#t:DataView),
+-- | which represents a range of an
 -- | `Data.ArrayBuffer.Types.ArrayBuffer`.
 -- |
 -- | For operations for working with `ArrayBuffer` and `DataView`, see
--- | module `Data.ArrayBuffer.DataView` in package __purescript-arraybuffer__.
+-- | module
+-- | [`Data.ArrayBuffer.DataView`](https://pursuit.purescript.org/packages/purescript-arraybuffer/docs/Data.ArrayBuffer.DataView)
+-- | in package __purescript-arraybuffer__.
 -- |
 -- | Reading from an `ArrayBuffer` is an `Effect`ful activity, so
 -- | all parsers in this module must be run in a
 -- | `MonadEffect m => ParserT DataView m` context, with
 -- | `Text.Parsing.Parser.runParserT`.
--- |
--- | ## References
--- |
--- | * [MDN `ArrayBuffer`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer)
--- | * [MDN `DataView`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/DataView)
 module Text.Parsing.Parser.DataView
   ( anyPrim
   , anyInt8
@@ -51,8 +51,6 @@ module Text.Parsing.Parser.DataView
   , takeN
   , takeRest
   , eof
-  , module Data.ArrayBuffer.Types
-  , module Data.ArrayBuffer.DataView
   )
   where
 
@@ -73,7 +71,6 @@ import Text.Parsing.Parser.Pos (Position(..))
 import Text.Parsing.Parser.Combinators (tryRethrow)
 import Data.ArrayBuffer.Types
   ( DataView
-  , ArrayView
   , Int16
   , Int32
   , Int8

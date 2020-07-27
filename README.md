@@ -60,9 +60,9 @@ it depends on
 do
   result <- Text.Parsing.Parser.runParserT dataview $ do
     -- Parse 32 bits of the big-endian 64-bit length prefix.
-    _      <- anyUint32be
-    length <- anyUint32be
-    stringview <- takeN $ UInt.toInt length
+    _           <- anyUint32be
+    length      <- anyUint32be
+    stringview  <- takeN $ UInt.toInt length
     stringarray <- liftEffect $ mkTypedArray stringview
     case Data.TextDecoding.decodeUtf8 stringarray of
       Left err -> Data.Parsing.Parser.fail $ show err
@@ -77,4 +77,16 @@ where
     pure $ Data.ArrayBuffer.Typed.part buffer byteOffset byteLength
 ```
 
+## Serialization
 
+This package is for reading (`DataView`s on) `ArrayBuffer`s, not writing
+them. See the package
+[__purescript-arraybuffer-builder__](https://pursuit.purescript.org/packages/purescript-arraybuffer-builder/)
+for a way to
+serialize and build `ArrayBuffer`s.
+
+
+## References
+
+* [MDN `ArrayBuffer`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer)
+* [MDN `DataView`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/DataView)
