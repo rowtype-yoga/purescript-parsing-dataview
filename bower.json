@@ -1,31 +1,21 @@
 {
-  "name": "purescript-parsing-dataview",
-  "homepage": "https://github.com/jamesdbrock/purescript-parsing-dataview",
-  "description": "ArrayBuffer DataView input stream support for purescript-parsing",
-  "keywords": [
-    "purescript"
-  ],
-  "license": "BSD-3-Clause",
-  "repository": {
-    "type": "git",
-    "url": "git://github.com/jamesdbrock/purescript-parsing-dataview.git"
-  },
-  "ignore": [
-    "**/.*",
-    "bower_components",
-    "node_modules",
-    "output",
-    "test",
-    "bower.json",
-    "package.json"
-  ],
-  "dependencies": {
-    "purescript-parsing": "^5.0.0",
-    "purescript-arraybuffer": "^10.0.0"
-  },
-  "devDependencies": {
-    "purescript-assert": "^4.0.0",
-    "purescript-console": "^4.1.0",
-    "purescript-psci-support": "^4.0.0"
-  }
+    "name": "purescript-parsing-dataview",
+    "license": [
+        "MIT"
+    ],
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/jamesdbrock/purescript-parsing-dataview"
+    },
+    "ignore": [
+        "**/.*",
+        "node_modules",
+        "bower_components",
+        "output"
+    ],
+    "dependencies": {
+        "purescript-arraybuffer": "^v10.0.2",
+        "purescript-arraybuffer-types": "^v2.0.0",
+        "purescript-parsing": "^v5.0.3"
+    }
 }
