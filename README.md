@@ -14,7 +14,7 @@ able to roughly match the built-in stream support of __Megaparsec__:
 |----|-----|----|
 | UTF-16 strings | String | Text |
 | Listy strings | Token | String |
-| Binary blobs | __Text.Parsing.Parser.DataView__ | Bytestring |
+| Binary blobs | __Text.Parsing.Parser.DataView__ | ByteString |
 
 ## Usage examples
 
@@ -36,7 +36,7 @@ do
 
 ### Parse an array
 
-Parse `n` 32-bit signed integers.
+Parse an array of `n` 32-bit signed integers.
 
 ```purescript
 do
@@ -51,6 +51,7 @@ way that's compatible with the
 function from the Haskell
 [__binary__](https://hackage.haskell.org/package/binary)
 library.
+
 We give this as an example, rather than supporting it in the library, because
 it depends on
 [`Data.TextDecoding.decodeUtf8`](https://pursuit.purescript.org/packages/purescript-text-encoding/docs/Data.TextDecoding#v:decodeUtf8).
@@ -58,12 +59,14 @@ it depends on
 ```purescript
 do
   result <- Text.Parsing.Parser.runParserT dataview $ do
-    -- Parse a big-endian 64-big length prefix
+    -- Parse 32 bits of the big-endian 64-bit length prefix.
     _      <- anyUint32be
     length <- anyUint32be
     stringview <- takeN $ UInt.toInt length
     stringarray <- liftEffect $ mkTypedArray stringview
-    pure $ Data.TextDecoding.decodeUtf8 stringarray
+    case Data.TextDecoding.decodeUtf8 stringarray of
+      Left err -> Data.Parsing.Parser.fail $ show err
+      Right s  -> pure s
 
 where
   mkTypedArray :: Data.ArrayBuffer.Types.DataView -> Effect Data.ArrayBuffer.Types.Uint8Array
