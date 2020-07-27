@@ -2,7 +2,8 @@
 -}
 { name = "parsing-dataview"
 , dependencies =
-  [ "arraybuffer-types"
+  [ "parsing"
+  , "arraybuffer-types"
   , "arraybuffer"
   ]
 , packages = ./packages.dhall
