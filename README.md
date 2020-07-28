@@ -49,36 +49,30 @@ do
 
 ### Parse UTF8
 
-Parse a `String` as UTF8 with a length prefix in a
-way that's compatible with the
-[`Binary.Put.putStringUtf8`](https://hackage.haskell.org/package/binary/docs/Data-Binary-Put.html#v:putStringUtf8)
-function from the Haskell
-[__binary__](https://hackage.haskell.org/package/binary)
-library.
+Parse a `String` as UTF8 with a length prefix.
 
 We give this as an example, rather than supporting it in the library, because
 it depends on
 [`Data.TextDecoding.decodeUtf8`](https://pursuit.purescript.org/packages/purescript-text-encoding/docs/Data.TextDecoding#v:decodeUtf8).
 
 ```purescript
+mkTypedArray :: Data.ArrayBuffer.Types.DataView -> Effect Data.ArrayBuffer.Types.Uint8Array
+mkTypedArray dv = do
+  let buffer     = Data.ArrayBuffer.DataView.buffer dv
+      byteOffset = Data.ArrayBuffer.DataView.byteOffset dv
+      byteLength = Data.ArrayBuffer.DataView.byteLength dv
+  Data.ArrayBuffer.Typed.part buffer byteOffset byteLength
+
 do
   result <- Text.Parsing.Parser.runParserT dataview $ do
-    -- Parse 32 bits of the big-endian 64-bit length prefix.
-    _           <- anyUint32be
+    -- Parse a 32-bit big-endian length prefix for the length of the utf8 string,
+    -- in bytes.
     length      <- anyUint32be
     stringview  <- takeN $ UInt.toInt length
     stringarray <- liftEffect $ mkTypedArray stringview
     case Data.TextDecoding.decodeUtf8 stringarray of
       Left err -> Data.Parsing.Parser.fail $ show err
       Right s  -> pure s
-
-where
-  mkTypedArray :: Data.ArrayBuffer.Types.DataView -> Effect Data.ArrayBuffer.Types.Uint8Array
-  mkTypedArray dv = do
-    let buffer     = Data.ArrayBuffer.DataView.buffer dv
-        byteOffset = Data.ArrayBuffer.DataView.byteOffset dv
-        byteLength = Data.ArrayBuffer.DataView.byteLength dv
-    Data.ArrayBuffer.Typed.part buffer byteOffset byteLength
 ```
 
 ## Serialization
