@@ -16,10 +16,6 @@ roughly matches the built-in stream support of __Megaparsec__:
 | Listy strings | Token | String |
 | Binary blobs | __DataView__ | ByteString |
 
-Perhaps some day this package can be
-[merged into __purescript-parsing__](https://github.com/purescript-contrib/purescript-parsing/issues/88),
-but for now it has too many non-*purescript-contrib* dependencies.
-
 ## Usage examples
 
 Parse values out of a `dataview :: Data.ArrayBuffer.Types.DataView`. All
@@ -88,3 +84,9 @@ serialize and build `ArrayBuffer`s.
 
 * [MDN `ArrayBuffer`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer)
 * [MDN `DataView`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/DataView)
+
+## Notes
+
+Perhaps some day this package can be
+[merged into __purescript-parsing__](https://github.com/purescript-contrib/purescript-parsing/issues/88),
+but for now it has too many non-*purescript-contrib* dependencies.
