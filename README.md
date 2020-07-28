@@ -14,7 +14,7 @@ roughly matches the built-in stream support of __Megaparsec__:
 |----|-----|----|
 | UTF-16 strings | String | Text |
 | Listy strings | Token | String |
-| Binary blobs | __Text.Parsing.Parser.DataView__ | ByteString |
+| Binary blobs | __DataView__ | ByteString |
 
 Perhaps some day this package can be
 [merged into __purescript-parsing__](https://github.com/purescript-contrib/purescript-parsing/issues/88),
