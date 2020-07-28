@@ -1,7 +1,7 @@
 {
     "name": "purescript-parsing-dataview",
     "license": [
-        "MIT"
+        "BSD-3-Clause"
     ],
     "repository": {
         "type": "git",

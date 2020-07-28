@@ -8,6 +8,6 @@
   ]
 , packages = ./packages.dhall
 , sources = [ "src/**/*.purs" ]
-, license = "MIT"
+, license = "BSD-3-Clause"
 , repository = "https://github.com/jamesdbrock/purescript-parsing-dataview"
 }
