@@ -52,6 +52,9 @@ it depends on
 [`Data.TextDecoding.decodeUtf8`](https://pursuit.purescript.org/packages/purescript-text-encoding/docs/Data.TextDecoding#v:decodeUtf8).
 
 ```purescript
+import Effect (Effect, liftEffect)
+import Control.Monad.Trans.Class (lift)
+
 mkTypedArray :: Data.ArrayBuffer.Types.DataView -> Effect Data.ArrayBuffer.Types.Uint8Array
 mkTypedArray dv = do
   let buffer     = Data.ArrayBuffer.DataView.buffer dv
@@ -65,7 +68,7 @@ do
     -- in bytes.
     length      <- anyUint32be
     stringview  <- takeN $ UInt.toInt length
-    stringarray <- liftEffect $ mkTypedArray stringview
+    stringarray <- lift $ liftEffect $ mkTypedArray stringview
     case Data.TextDecoding.decodeUtf8 stringarray of
       Left err -> Data.Parsing.Parser.fail $ show err
       Right s  -> pure s
