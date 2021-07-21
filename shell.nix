@@ -1,26 +1,30 @@
-{ pkgs ? import <nixpkgs> { } }:
+# Universal shell for PureScript repos
+# { pkgs ? import <nixpkgs> { }
+{ pkgs ? import (builtins.fetchGit {
+  # https://github.com/NixOS/nixpkgs/releases/tag/20.09
+  url = "https://github.com/nixos/nixpkgs/";
+  ref = "refs/tags/20.09";
+  rev = "cd63096d6d887d689543a0b97743d28995bc9bc3";
+  }) {}
+}:
 let
-  easy-ps = import
-    (pkgs.fetchFromGitHub {
-      owner = "justinwoo";
-      repo = "easy-purescript-nix";
-      rev = "0ba91d9aa9f7421f6bfe4895677159a8a999bf20";
-      sha256 = "1baq7mmd3vjas87f0gzlq83n2l1h3dlqajjqr7fgaazpa9xgzs7q";
-    }) {
-    inherit pkgs;
-  };
+  easy-ps = import (builtins.fetchGit {
+    url = "https://github.com/justinwoo/easy-purescript-nix.git";
+    rev = "bbef4245cd6810ea84e97a47c801947bfec9fadc";
+  }) { inherit pkgs; };
 in
 pkgs.mkShell {
-  buildInputs = [
-    easy-ps.purs-0_13_8
+  nativeBuildInputs = [
+    easy-ps.purs-0_14_3
     easy-ps.spago
-    pkgs.nodejs-13_x
+    easy-ps.pulp
+    easy-ps.psc-package
+    pkgs.nodejs-14_x
     pkgs.nodePackages.bower
-    # pkgs.nodePackages.pulp
-    #
-    # The pulp nix derivation doesn't work, so to run pulp:
-    # $ npm install pulp
-    # $ node node_modules/pulp/index.js
   ];
   LC_ALL = "C.UTF-8"; # https://github.com/purescript/spago/issues/507
+  # https://github.com/purescript/spago#install-autocompletions-for-bash
+  shellHook = ''
+    source <(spago --bash-completion-script `which spago`)
+  '';
 }
