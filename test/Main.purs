@@ -2,21 +2,22 @@ module Test.Main where
 
 import Prelude
 
+import Control.Monad.Trans.Class (lift)
+import Data.ArrayBuffer.ArrayBuffer (empty) as AB
+import Data.ArrayBuffer.DataView as DataView
 import Data.Either (Either(..))
 import Data.List (fromFoldable)
-import Data.Traversable(for_)
+import Data.Maybe (Maybe(..))
+import Data.Traversable (for_)
 import Data.Tuple (Tuple(..))
 import Data.UInt (fromInt)
 import Effect (Effect)
 import Effect.Console (logShow)
-import Control.Monad.Trans.Class (lift)
 import Test.Assert (assert')
 import Text.Parsing.Parser (ParserT, runParserT, parseErrorPosition, fail)
 import Text.Parsing.Parser.Combinators (manyTill)
-import Text.Parsing.Parser.Pos (Position(..))
-import Data.ArrayBuffer.ArrayBuffer (empty) as AB
-import Data.ArrayBuffer.DataView (setInt8, whole) as AB
 import Text.Parsing.Parser.DataView as DV
+import Text.Parsing.Parser.Pos (Position(..))
 
 parseTestT :: forall s a. Show a => Eq a => s -> a -> ParserT s Effect a -> Effect Unit
 parseTestT input expected p = do
@@ -48,10 +49,10 @@ mkPos' column line = Position { column: column, line: line }
 main :: Effect Unit
 main = do
 
-  -- Test input DataView = [5,6,7,8,9]
+  -- Test input is DataView = [5,6,7,8,9]
   ab <- AB.empty 5
-  let dv = AB.whole ab
-  for_ [0,1,2,3,4] $ \i -> AB.setInt8 dv i (i+5)
+  let dv = DataView.whole ab
+  for_ [0,1,2,3,4] $ \i -> DataView.setInt8 dv i (i+5)
   -- anyInt8
   parseTestT dv 5 DV.anyInt8
   -- manyTill eof
@@ -120,3 +121,12 @@ main = do
     lift (runParserT dv2 DV.anyInt16le) >>= case _ of
       Left err -> fail $ show err
       Right x -> pure x
+
+  -- test match combinator
+  runParserT dv (DV.match (DV.anyInt8 *> DV.anyInt8)) >>= case _ of
+    Right (Tuple matchresult _) -> do
+      r0 <- DataView.getInt8 matchresult 0
+      r1 <- DataView.getInt8 matchresult 1
+      assert' ("match failed " <> show r0 <> " " <> show r1) $ r0 == Just 5 && r1 == Just 6
+      logShow $ show r0 <> " " <> show r1
+    Left err -> assert' ("match failed " <> show err) false

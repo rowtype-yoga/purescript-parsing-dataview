@@ -15,5 +15,10 @@ in conf //
   , dependencies = conf.dependencies #
       [ "assert"
       , "parsing"
+      , "console"
+      , "foldable-traversable"
+      , "lists"
+      , "psci-support"
+      , "either"
       ]
   }

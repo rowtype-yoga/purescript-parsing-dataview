@@ -51,6 +51,7 @@ module Text.Parsing.Parser.DataView
   , takeN
   , takeRest
   , eof
+  , match
   )
   where
 
@@ -292,6 +293,20 @@ eof :: forall m. Monad m => ParserT DataView m Unit
 eof = do
   ParseState input (Position {column}) _ <- get
   unless (column > DV.byteLength input) $ fail "Expected end of DataView"
+
+-- | The
+-- | [famous `match`](http://www.serpentine.com/blog/2014/05/31/attoparsec/#from-strings-to-buffers-and-cursors)
+-- | combinator.
+-- |
+-- | Return both the result of a parse and the portion of the input that
+-- | was consumed while it was being parsed.
+match :: forall a m. MonadEffect m => ParserT DataView m a -> ParserT DataView m (Tuple DataView a)
+match p = do
+  ParseState input (Position {column:column0}) _ <- get
+  x <- p
+  ParseState _ (Position {column:column1}) _ <- get
+  part <- lift $ liftEffect $ DV.part (DV.buffer input) (DV.byteOffset input + (column0-1)) (column1-column0)
+  pure $ Tuple part x
 
 -- ****************************** Notes ****************************************
 --
