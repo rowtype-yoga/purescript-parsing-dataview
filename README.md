@@ -27,8 +27,11 @@ Parse values out of a `dataview :: Data.ArrayBuffer.Types.DataView`. All
 Parse two big-endian IEEE 754 double-precision floats.
 
 ```purescript
+import Text.Parsing.Parser (runParserT)
+import Text.Parsing.Parser.DataView (anyFloat64be)
+
 do
-  result <- Text.Parsing.Parser.runParserT dataview $ do
+  result <- runParserT dataview $ do
     float1 <- anyFloat64be
     float2 <- anyFloat64be
     pure $ Tuple float1 float2
@@ -39,8 +42,12 @@ do
 Parse an array of `n` 32-bit signed integers.
 
 ```purescript
+import Text.Parsing.Parser (runParserT)
+import Text.Parsing.Parser.DataView (anyUint32be)
+import Data.Unfoldable (replicateA)
+
 do
-  result <- Text.Parsing.Parser.runParserT dataview $ replicateA n anyInt32be
+  result <- runParserT dataview $ replicateA n anyInt32be
 ```
 
 ### Parse UTF8
@@ -52,25 +59,29 @@ it depends on
 [`Data.TextDecoding.decodeUtf8`](https://pursuit.purescript.org/packages/purescript-text-encoding/docs/Data.TextDecoding#v:decodeUtf8).
 
 ```purescript
-import Effect (Effect, liftEffect)
 import Control.Monad.Trans.Class (lift)
+import Data.ArrayBuffer.Types (DataView, Uint8Array)
+import Data.ArrayBuffer.DataView (buffer, byteOffset, byteLength)
+import Data.ArrayBuffer.Typed (part)
+import Effect (Effect, liftEffect)
+import Text.Parsing.Parser (runParserT, fail)
+import Text.Parsing.Parser.DataView (anyUint32be, takeN)
+import Data.UInt (toInt)
+import Data.Text.Decoding (decodeUtf8)
 
-mkTypedArray :: Data.ArrayBuffer.Types.DataView -> Effect Data.ArrayBuffer.Types.Uint8Array
-mkTypedArray dv = do
-  let buffer     = Data.ArrayBuffer.DataView.buffer dv
-      byteOffset = Data.ArrayBuffer.DataView.byteOffset dv
-      byteLength = Data.ArrayBuffer.DataView.byteLength dv
-  Data.ArrayBuffer.Typed.part buffer byteOffset byteLength
+
+mkUint8Array :: DataView -> Effect Uint8Array
+mkUint8Array dv = part (buffer dv) (byteOffset dv) (byteLength dv)
 
 do
-  result <- Text.Parsing.Parser.runParserT dataview $ do
+  result <- runParserT dataview $ do
     -- Parse a 32-bit big-endian length prefix for the length of the utf8 string,
     -- in bytes.
     length      <- anyUint32be
-    stringview  <- takeN $ UInt.toInt length
-    stringarray <- lift $ liftEffect $ mkTypedArray stringview
-    case Data.TextDecoding.decodeUtf8 stringarray of
-      Left err -> Data.Parsing.Parser.fail $ show err
+    stringview  <- takeN $ toInt length
+    stringarray <- lift $ liftEffect $ mkUint8Array stringview
+    case decodeUtf8 stringarray of
+      Left err -> fail $ show err
       Right s  -> pure s
 ```
 
@@ -78,7 +89,7 @@ do
 
 This package is for reading (`DataView`s on) `ArrayBuffer`s, not writing
 them. See the package
-[__purescript-arraybuffer-builder__](https://pursuit.purescript.org/packages/purescript-arraybuffer-builder/)
+[__arraybuffer-builder__](https://pursuit.purescript.org/packages/purescript-arraybuffer-builder/)
 for a way to
 serialize and build `ArrayBuffer`s.
 
@@ -88,8 +99,3 @@ serialize and build `ArrayBuffer`s.
 * [MDN `ArrayBuffer`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer)
 * [MDN `DataView`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/DataView)
 
-## Notes
-
-Perhaps some day this package can be
-[merged into __purescript-parsing__](https://github.com/purescript-contrib/purescript-parsing/issues/88),
-but for now it has too many non-*purescript-contrib* dependencies.
