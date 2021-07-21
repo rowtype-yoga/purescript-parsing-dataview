@@ -2,9 +2,16 @@
 -}
 { name = "parsing-dataview"
 , dependencies =
-  [ "parsing"
+  [ "arraybuffer"
   , "arraybuffer-types"
-  , "arraybuffer"
+  , "effect"
+  , "float32"
+  , "maybe"
+  , "parsing"
+  , "prelude"
+  , "transformers"
+  , "tuples"
+  , "uint"
   ]
 , packages = ./packages.dhall
 , sources = [ "src/**/*.purs" ]

@@ -60,7 +60,7 @@ import Control.Monad.Trans.Class (lift)
 import Control.Monad.State (get, put)
 import Data.Maybe (Maybe(..))
 import Data.Symbol (SProxy(..), class IsSymbol, reflectSymbol)
-import Data.Typelevel.Num (class Nat, toInt')
+import Data.Tuple(Tuple(..))
 import Data.UInt (UInt)
 import Data.Float32 as Float32
 import Effect.Class (class MonadEffect, liftEffect)
@@ -82,13 +82,13 @@ import Data.ArrayBuffer.Types
   , ByteLength
   )
 import Data.ArrayBuffer.ValueMapping
-  ( class BytesPerValue
+  ( class BytesPerType
   , class BinaryValue
   , class ShowArrayViewType
+  , byteWidth
   )
 import Data.ArrayBuffer.DataView
-  ( AProxy(..)
-  , Endian(LE,BE)
+  ( Endian(LE,BE)
   )
 import Data.ArrayBuffer.DataView (byteLength, byteOffset, get, part, buffer) as DV
 
@@ -99,83 +99,82 @@ import Data.ArrayBuffer.DataView (byteLength, byteOffset, get, part, buffer) as 
 -- |
 -- | Parse a little-endian 32-bit signed integer (4 bytes):
 -- |
--- |     anyPrim LE (AProxy :: AProxy Int32)
+-- |     anyPrim LE (Proxy :: Proxy Int32)
 -- |
 -- | or just use the convenience function `anyInt32le`, see below.
-anyPrim :: forall a name b m t
+anyPrim :: forall a name m t
        . BinaryValue a t
-      => BytesPerValue a b
+      => BytesPerType a
       => ShowArrayViewType a name
       => IsSymbol name
-      => Nat b
       => MonadEffect m
       => Endian
-      -> AProxy a
+      -> Proxy a
       -> ParserT DataView m t
-anyPrim endian aproxy = do
+anyPrim endian _ = do
   ParseState input (Position{line,column}) _ <- get
-  lift (liftEffect (DV.get endian (AProxy :: AProxy a) input (column-1))) >>= case _ of
+  lift (liftEffect (DV.get endian (Proxy :: Proxy a) input (column-1))) >>= case _ of
     Nothing -> fail $ "Cannot parse " <> reflectSymbol (SProxy :: SProxy name) <>
       ", unexpected end of DataView"
     Just i -> do
-      put $ ParseState input (Position {line, column:column + toInt' (Proxy :: Proxy b) }) true
+      put $ ParseState input (Position {line, column:column + byteWidth (Proxy :: Proxy a) }) true
       pure i
 
 -- | Parse one 8-bit signed integer (byte).
 anyInt8 :: forall m. MonadEffect m => ParserT DataView m Int
-anyInt8 = anyPrim LE (AProxy :: AProxy Int8)
+anyInt8 = anyPrim LE (Proxy :: Proxy Int8)
 
 -- | Parse one 16-bit big-endian signed integer.
 anyInt16be :: forall m. MonadEffect m => ParserT DataView m Int
-anyInt16be = anyPrim BE (AProxy :: AProxy Int16)
+anyInt16be = anyPrim BE (Proxy :: Proxy Int16)
 
 -- | Parse one 16-bit little-endian signed integer.
 anyInt16le :: forall m. MonadEffect m => ParserT DataView m Int
-anyInt16le = anyPrim LE (AProxy :: AProxy Int16)
+anyInt16le = anyPrim LE (Proxy :: Proxy Int16)
 
 -- | Parse one 32-bit big-endian signed integer.
 anyInt32be :: forall m. MonadEffect m => ParserT DataView m Int
-anyInt32be = anyPrim BE (AProxy :: AProxy Int32)
+anyInt32be = anyPrim BE (Proxy :: Proxy Int32)
 
 -- | Parse one 32-bit little-endian signed integer.
 anyInt32le :: forall m. MonadEffect m => ParserT DataView m Int
-anyInt32le = anyPrim LE (AProxy :: AProxy Int32)
+anyInt32le = anyPrim LE (Proxy :: Proxy Int32)
 
 -- | Parse one 8-bit unsigned integer (octet).
 anyUint8 :: forall m. MonadEffect m => ParserT DataView m UInt
-anyUint8 = anyPrim LE (AProxy :: AProxy Uint8)
+anyUint8 = anyPrim LE (Proxy :: Proxy Uint8)
 
 -- | Parse one 16-bit big-endian unsigned integer.
 anyUint16be :: forall m. MonadEffect m => ParserT DataView m UInt
-anyUint16be = anyPrim BE (AProxy :: AProxy Uint16)
+anyUint16be = anyPrim BE (Proxy :: Proxy Uint16)
 
 -- | Parse one 16-bit little-endian unsigned integer.
 anyUint16le :: forall m. MonadEffect m => ParserT DataView m UInt
-anyUint16le = anyPrim LE (AProxy :: AProxy Uint16)
+anyUint16le = anyPrim LE (Proxy :: Proxy Uint16)
 
 -- | Parse one 32-bit big-endian unsigned integer.
 anyUint32be :: forall m. MonadEffect m => ParserT DataView m UInt
-anyUint32be = anyPrim BE (AProxy :: AProxy Uint32)
+anyUint32be = anyPrim BE (Proxy :: Proxy Uint32)
 
 -- | Parse one 32-bit little-endian unsigned integer.
 anyUint32le :: forall m. MonadEffect m => ParserT DataView m UInt
-anyUint32le = anyPrim LE (AProxy :: AProxy Uint32)
+anyUint32le = anyPrim LE (Proxy :: Proxy Uint32)
 
 -- | Parse one 32-bit big-endian floating point number.
 anyFloat32be :: forall m. MonadEffect m => ParserT DataView m Float32.Float32
-anyFloat32be = anyPrim BE (AProxy :: AProxy Float32)
+anyFloat32be = anyPrim BE (Proxy :: Proxy Float32)
 
 -- | Parse one 32-bit little-endian floating point number.
 anyFloat32le :: forall m. MonadEffect m => ParserT DataView m Float32.Float32
-anyFloat32le = anyPrim LE (AProxy :: AProxy Float32)
+anyFloat32le = anyPrim LE (Proxy :: Proxy Float32)
 
 -- | Parse one 64-bit big-endian floating point number.
 anyFloat64be :: forall m. MonadEffect m => ParserT DataView m Number
-anyFloat64be = anyPrim BE (AProxy :: AProxy Float64)
+anyFloat64be = anyPrim BE (Proxy :: Proxy Float64)
 
 -- | Parse one 64-bit little-endian floating point number.
 anyFloat64le :: forall m. MonadEffect m => ParserT DataView m Number
-anyFloat64le = anyPrim LE (AProxy :: AProxy Float64)
+anyFloat64le = anyPrim LE (Proxy :: Proxy Float64)
 
 -- | Parse one fixed-bit-width primitive that satisfies the given predicate.
 -- |
@@ -183,82 +182,81 @@ anyFloat64le = anyPrim LE (AProxy :: AProxy Float64)
 -- |
 -- | Parse a little-endian 32-bit signed integer that is equal to *3*:
 -- |
--- |     satisfy LE (AProxy :: AProxy Int32) (_ == 3)
+-- |     satisfy LE (Proxy :: Proxy Int32) (_ == 3)
 -- |
 -- | or just use the convenience function `satisfyInt32le`, see below.
-satisfy :: forall a name b m t
+satisfy :: forall a name m t
              . BinaryValue a t
-            => BytesPerValue a b
+            => BytesPerType a
             => ShowArrayViewType a name
             => IsSymbol name
-            => Nat b
             => Show t
             => MonadEffect m
             => Endian
-            -> AProxy a
+            -> Proxy a
             -> (t -> Boolean)
             -> ParserT DataView m t
-satisfy endian aproxy f = tryRethrow do
-  i <- anyPrim endian aproxy
+satisfy endian proxy f = tryRethrow do
+  i <- anyPrim endian proxy
   if f i then pure i
          else fail $ reflectSymbol (SProxy :: SProxy name) <>
                      " " <> show i <> " did not satisfy predicate."
 
 -- | Parse one 8-bit signed integer that satisfies the given predicate.
 satisfyInt8 :: forall m. MonadEffect m => (Int -> Boolean) -> ParserT DataView m Int
-satisfyInt8 = satisfy LE (AProxy :: AProxy Int8)
+satisfyInt8 = satisfy LE (Proxy :: Proxy Int8)
 
 -- | Parse one 16-bit big-endian signed integer that satisfies the given predicate.
 satisfyInt16be :: forall m. MonadEffect m => (Int -> Boolean) -> ParserT DataView m Int
-satisfyInt16be = satisfy BE (AProxy :: AProxy Int16)
+satisfyInt16be = satisfy BE (Proxy :: Proxy Int16)
 
 -- | Parse one 16-bit little-endian signed integer that satisfies the given predicate.
 satisfyInt16le :: forall m. MonadEffect m => (Int -> Boolean) -> ParserT DataView m Int
-satisfyInt16le = satisfy LE (AProxy :: AProxy Int16)
+satisfyInt16le = satisfy LE (Proxy :: Proxy Int16)
 
 -- | Parse one 32-bit big-endian signed integer that satisfies the given predicate.
 satisfyInt32be :: forall m. MonadEffect m => (Int -> Boolean) -> ParserT DataView m Int
-satisfyInt32be = satisfy BE (AProxy :: AProxy Int32)
+satisfyInt32be = satisfy BE (Proxy :: Proxy Int32)
 
 -- | Parse one 32-bit little-endian signed integer that satisfies the given predicate.
 satisfyInt32le :: forall m. MonadEffect m => (Int -> Boolean) -> ParserT DataView m Int
-satisfyInt32le = satisfy LE (AProxy :: AProxy Int32)
+satisfyInt32le = satisfy LE (Proxy :: Proxy Int32)
 
 -- | Parse one 8-bit unsigned integer that satisfies the given predicate.
 satisfyUint8 :: forall m. MonadEffect m => (UInt -> Boolean) -> ParserT DataView m UInt
-satisfyUint8 = satisfy LE (AProxy :: AProxy Uint8)
+satisfyUint8 = satisfy LE (Proxy :: Proxy Uint8)
 
 -- | Parse one 16-bit big-endian unsigned integer that satisfies the given predicate.
 satisfyUint16be :: forall m. MonadEffect m => (UInt -> Boolean) -> ParserT DataView m UInt
-satisfyUint16be = satisfy BE (AProxy :: AProxy Uint16)
+satisfyUint16be = satisfy BE (Proxy :: Proxy Uint16)
 
 -- | Parse one 16-bit little-endian unsigned integer that satisfies the given predicate.
 satisfyUint16le :: forall m. MonadEffect m => (UInt -> Boolean) -> ParserT DataView m UInt
-satisfyUint16le = satisfy LE (AProxy :: AProxy Uint16)
+satisfyUint16le = satisfy LE (Proxy :: Proxy Uint16)
 
 -- | Parse one 32-bit big-endian unsigned integer that satisfies the given predicate.
 satisfyUint32be :: forall m. MonadEffect m => (UInt -> Boolean) -> ParserT DataView m UInt
-satisfyUint32be = satisfy BE (AProxy :: AProxy Uint32)
+satisfyUint32be = satisfy BE (Proxy :: Proxy Uint32)
 
 -- | Parse one 32-bit little-endian unsigned integer that satisfies the given predicate.
 satisfyUint32le :: forall m. MonadEffect m => (UInt -> Boolean) -> ParserT DataView m UInt
-satisfyUint32le = satisfy LE (AProxy :: AProxy Uint32)
+satisfyUint32le = satisfy LE (Proxy :: Proxy Uint32)
 
 -- | Parse one 32-bit big-endian floating-point number that satisfies the given predicate.
 satisfyFloat32be :: forall m. MonadEffect m => (Float32.Float32 -> Boolean) -> ParserT DataView m Float32.Float32
-satisfyFloat32be = satisfy BE (AProxy :: AProxy Float32)
+satisfyFloat32be = satisfy BE (Proxy :: Proxy Float32)
 
 -- | Parse one 32-bit little-endian floating-point number that satisfies the given predicate.
 satisfyFloat32le :: forall m. MonadEffect m => (Float32.Float32 -> Boolean) -> ParserT DataView m Float32.Float32
-satisfyFloat32le = satisfy LE (AProxy :: AProxy Float32)
+satisfyFloat32le = satisfy LE (Proxy :: Proxy Float32)
 
 -- | Parse one 64-bit big-endian floating-point number that satisfies the given predicate.
 satisfyFloat64be :: forall m. MonadEffect m => (Number -> Boolean) -> ParserT DataView m Number
-satisfyFloat64be = satisfy BE (AProxy :: AProxy Float64)
+satisfyFloat64be = satisfy BE (Proxy :: Proxy Float64)
 
 -- | Parse one 64-bit little-endian floating-point number that satisfies the given predicate.
 satisfyFloat64le :: forall m. MonadEffect m => (Number -> Boolean) -> ParserT DataView m Number
-satisfyFloat64le = satisfy LE (AProxy :: AProxy Float64)
+satisfyFloat64le = satisfy LE (Proxy :: Proxy Float64)
 
 -- | Take *N* bytes starting from the current parser position. Will fail
 -- | if not enough bytes remain in the input. Will fail if *N* is negative.
