@@ -15,6 +15,6 @@
   ]
 , packages = ./packages.dhall
 , sources = [ "src/**/*.purs" ]
-, license = "BSD-3-Clause"
+, license = "BSD-2-Clause"
 , repository = "https://github.com/jamesdbrock/purescript-parsing-dataview"
 }
