@@ -3,16 +3,17 @@
 [![CI](https://github.com/jamesdbrock/purescript-parsing-dataview/workflows/CI/badge.svg?branch=master)](https://github.com/jamesdbrock/purescript-parsing-dataview/actions)
 [![Pursuit](http://pursuit.purescript.org/packages/purescript-parsing-dataview/badge)](http://pursuit.purescript.org/packages/purescript-parsing-dataview/)
 
-Primitive parsers for parsing
-`DataView`s on Javascript `ArrayBuffer`s with the package
+Primitive parsers for
+`DataView`s on JavaScript `ArrayBuffer`s with the package
 [__purescript-parsing__](https://pursuit.purescript.org/packages/purescript-parsing/).
 
 With this package, the input stream support of __purescript-parsing__
-roughly matches the built-in stream support of __Megaparsec__:
+is similar to the built-in stream support of [__Megaparsec__](https://hackage.haskell.org/package/megaparsec):
 
 | Stream type | purescript-parsing | Megaparsec |
 |----|-----|----|
-| UTF-16 strings | String | Text |
+| UTF-16 strings | String | Text < v2.0|
+| UTF-8 strings | __DataView__ *see below* | Text ≥ v2.0 |
 | Listy strings | Token | String |
 | Binary blobs | __DataView__ | ByteString |
 
@@ -24,14 +25,14 @@ Parse values out of a `dataview :: Data.ArrayBuffer.Types.DataView`. All
 
 ### Parse two numbers
 
-Parse two big-endian IEEE 754 double-precision floats.
+Parse two big-endian IEEE 754 double-precision `Number`s.
 
 ```purescript
 import Text.Parsing.Parser (runParserT)
 import Text.Parsing.Parser.DataView (anyFloat64be)
 
 do
-  result <- runParserT dataview $ do
+  result <- runParserT dataview do
     float1 <- anyFloat64be
     float2 <- anyFloat64be
     pure $ Tuple float1 float2
@@ -39,7 +40,7 @@ do
 
 ### Parse an array
 
-Parse an array of `n` 32-bit signed integers.
+Parse an array of `n` 32-bit big-endian signed `Int`s.
 
 ```purescript
 import Text.Parsing.Parser (runParserT)
@@ -52,7 +53,7 @@ do
 
 ### Parse UTF8
 
-Parse a `String` as UTF8 with a length prefix.
+Parse a UTF-8 `String` with a length prefix.
 
 We give this as an example, rather than supporting it in the library, because
 it depends on
@@ -70,13 +71,15 @@ import Data.UInt (toInt)
 import Data.Text.Decoding (decodeUtf8)
 
 
+-- Make a `Uint8Array` Typed Array from a `DataView`. We can do this
+-- for the case of `Uint8` because byte arrays are always aligned.
 mkUint8Array :: DataView -> Effect Uint8Array
 mkUint8Array dv = part (buffer dv) (byteOffset dv) (byteLength dv)
 
 do
-  result <- runParserT dataview $ do
-    -- Parse a 32-bit big-endian length prefix for the length of the utf8 string,
-    -- in bytes.
+  result <- runParserT dataview do
+    -- Parse a 32-bit big-endian length prefix for the length
+    -- of the UTF-8 string in bytes.
     length      <- anyUint32be
     stringview  <- takeN $ toInt length
     stringarray <- lift $ liftEffect $ mkUint8Array stringview

@@ -1,24 +1,36 @@
--- | Primitive parsers for parsing Javascript ArrayBuffers with the
--- | [`Text.Parsing.Parser`](https://pursuit.purescript.org/packages/purescript-parsing/docs/Text.Parsing.Parser)
--- | module in package __purescript-parsing__.
+-- | Primitive parsers for JavaScript `ArrayBuffer`s with the
+-- | `ParserT` type and combinators in package __purescript-parsing__.
 -- | See the package README for usage examples.
 -- |
+-- | ### Mutable ArrayBuffer
+-- |
 -- | All of the parsers in this module operate on an input stream of
--- | [`Data.ArrayBuffer.Types.DataView`](https://pursuit.purescript.org/packages/purescript-arraybuffer-types/docs/Data.ArrayBuffer.Types#t:DataView),
--- | which represents a range of an
--- | `Data.ArrayBuffer.Types.ArrayBuffer`.
+-- | [__Data.ArrayBuffer.Types.DataView__](https://pursuit.purescript.org/packages/purescript-arraybuffer-types/docs/Data.ArrayBuffer.Types#t:DataView),
+-- | which represents a range of a mutable
+-- | [__Data.ArrayBuffer.Types.ArrayBuffer__](https://pursuit.purescript.org/packages/purescript-arraybuffer-types/docs/Data.ArrayBuffer.Types#t:ArrayBuffer).
 -- |
 -- | For operations for working with `ArrayBuffer` and `DataView`, see
 -- | module
--- | [`Data.ArrayBuffer.DataView`](https://pursuit.purescript.org/packages/purescript-arraybuffer/docs/Data.ArrayBuffer.DataView)
+-- | [__Data.ArrayBuffer.DataView__](https://pursuit.purescript.org/packages/purescript-arraybuffer/docs/Data.ArrayBuffer.DataView)
 -- | in package __purescript-arraybuffer__.
 -- |
 -- | Reading from an `ArrayBuffer` is an `Effect`ful activity, so
 -- | all parsers in this module must be run in a
--- | `MonadEffect m => ParserT DataView m` context, with
--- | `Text.Parsing.Parser.runParserT`.
-module Text.Parsing.Parser.DataView
-  ( anyPrim
+-- | `MonadEffect m => ParserT DataView m` context with
+-- | `Parsing.runParserT`.
+-- |
+-- | ### Position
+-- |
+-- | In a `DataView` parser, the `Position {index}` counts the number of
+-- | bytes since the beginning of the input.
+-- |
+-- | The `Postion {line,column}` fields are unused and will remain constant *1*.
+module Parsing.DataView
+  ( takeN
+  , takeRest
+  , eof
+  , match
+  , anyPrim
   , anyInt8
   , anyInt16be
   , anyInt16le
@@ -48,96 +60,69 @@ module Text.Parsing.Parser.DataView
   , satisfyFloat32le
   , satisfyFloat64be
   , satisfyFloat64le
-  , takeN
-  , takeRest
-  , eof
-  , match
-  )
-  where
+  ) where
 
 import Prelude
 
 import Control.Monad.Trans.Class (lift)
-import Control.Monad.State (get, put)
-import Data.Maybe (Maybe(..))
-import Data.Symbol (SProxy(..), class IsSymbol, reflectSymbol)
-import Data.Tuple(Tuple(..))
-import Data.UInt (UInt)
-import Data.Float32 as Float32
-import Effect.Class (class MonadEffect, liftEffect)
-import Type.Proxy (Proxy(..))
-
-import Text.Parsing.Parser (ParserT, ParseState(..), fail)
-import Text.Parsing.Parser.Pos (Position(..))
-import Text.Parsing.Parser.Combinators (tryRethrow)
-import Data.ArrayBuffer.Types
-  ( DataView
-  , Int16
-  , Int32
-  , Int8
-  , Uint16
-  , Uint32
-  , Uint8
-  , Float32
-  , Float64
-  , ByteLength
-  )
-import Data.ArrayBuffer.ValueMapping
-  ( class BytesPerType
-  , class BinaryValue
-  , class ShowArrayViewType
-  , byteWidth
-  )
-import Data.ArrayBuffer.DataView
-  ( Endian(LE,BE)
-  )
+import Data.ArrayBuffer.DataView (Endian(LE, BE))
 import Data.ArrayBuffer.DataView (byteLength, byteOffset, get, part, buffer) as DV
+import Data.ArrayBuffer.Types (DataView, Int16, Int32, Int8, Uint16, Uint32, Uint8, Float32, Float64, ByteLength)
+import Data.ArrayBuffer.ValueMapping (class BytesPerType, class BinaryValue, class ShowArrayViewType, byteWidth)
+import Data.Float32 as Float32
+import Data.Maybe (Maybe(..))
+import Data.Symbol (class IsSymbol)
+import Data.Tuple (Tuple(..))
+import Data.UInt (UInt)
+import Effect.Class (class MonadEffect, liftEffect)
+import Parsing (ParseState(..), ParserT, Position(..), consume, fail, getParserT, stateParserT)
+import Parsing.Combinators (tryRethrow)
+import Type.Proxy (Proxy(..))
 
 -- | Parse one fixed-bit-width `Data.ArrayBuffer.Types.ArrayViewType` primitive
 -- | of a given endianness.
 -- |
 -- | #### Example
 -- |
--- | Parse a little-endian 32-bit signed integer (4 bytes):
+-- | Parse a little-endian 32-bit two’s-complement signed integer (4 bytes):
 -- |
 -- |     anyPrim LE (Proxy :: Proxy Int32)
 -- |
 -- | or just use the convenience function `anyInt32le`, see below.
-anyPrim :: forall a name m t
-       . BinaryValue a t
-      => BytesPerType a
-      => ShowArrayViewType a name
-      => IsSymbol name
-      => MonadEffect m
-      => Endian
-      -> Proxy a
-      -> ParserT DataView m t
+anyPrim
+  :: forall a name m t
+   . BinaryValue a t
+  => BytesPerType a
+  => ShowArrayViewType a name
+  => IsSymbol name
+  => MonadEffect m
+  => Endian
+  -> Proxy a
+  -> ParserT DataView m t
 anyPrim endian _ = do
-  ParseState input (Position{line,column}) _ <- get
-  lift (liftEffect (DV.get endian (Proxy :: Proxy a) input (column-1))) >>= case _ of
-    Nothing -> fail $ "Cannot parse " <> reflectSymbol (SProxy :: SProxy name) <>
-      ", unexpected end of DataView"
+  ParseState input (Position { index }) _ <- getParserT
+  lift (liftEffect (DV.get endian (Proxy :: Proxy a) input index)) >>= case _ of
+    Nothing -> fail "anyPrim unexpected end of DataView"
     Just i -> do
-      put $ ParseState input (Position {line, column:column + byteWidth (Proxy :: Proxy a) }) true
-      pure i
+      stateParserT \_ -> Tuple i $ ParseState input (Position { line: 1, column: 1, index: index + byteWidth (Proxy :: Proxy a) }) true
 
--- | Parse one 8-bit signed integer (byte).
+-- | Parse one 8-bit two’s-complement signed integer (byte).
 anyInt8 :: forall m. MonadEffect m => ParserT DataView m Int
 anyInt8 = anyPrim LE (Proxy :: Proxy Int8)
 
--- | Parse one 16-bit big-endian signed integer.
+-- | Parse one 16-bit big-endian two’s-complement signed integer.
 anyInt16be :: forall m. MonadEffect m => ParserT DataView m Int
 anyInt16be = anyPrim BE (Proxy :: Proxy Int16)
 
--- | Parse one 16-bit little-endian signed integer.
+-- | Parse one 16-bit little-endian two’s-complement signed integer.
 anyInt16le :: forall m. MonadEffect m => ParserT DataView m Int
 anyInt16le = anyPrim LE (Proxy :: Proxy Int16)
 
--- | Parse one 32-bit big-endian signed integer.
+-- | Parse one 32-bit big-endian two’s-complement signed integer.
 anyInt32be :: forall m. MonadEffect m => ParserT DataView m Int
 anyInt32be = anyPrim BE (Proxy :: Proxy Int32)
 
--- | Parse one 32-bit little-endian signed integer.
+-- | Parse one 32-bit little-endian two’s-complement signed integer.
 anyInt32le :: forall m. MonadEffect m => ParserT DataView m Int
 anyInt32le = anyPrim LE (Proxy :: Proxy Int32)
 
@@ -161,19 +146,19 @@ anyUint32be = anyPrim BE (Proxy :: Proxy Uint32)
 anyUint32le :: forall m. MonadEffect m => ParserT DataView m UInt
 anyUint32le = anyPrim LE (Proxy :: Proxy Uint32)
 
--- | Parse one 32-bit big-endian floating point number.
+-- | Parse one 32-bit big-endian IEEE 754 floating-point number.
 anyFloat32be :: forall m. MonadEffect m => ParserT DataView m Float32.Float32
 anyFloat32be = anyPrim BE (Proxy :: Proxy Float32)
 
--- | Parse one 32-bit little-endian floating point number.
+-- | Parse one 32-bit little-endian IEEE 754 floating-point number.
 anyFloat32le :: forall m. MonadEffect m => ParserT DataView m Float32.Float32
 anyFloat32le = anyPrim LE (Proxy :: Proxy Float32)
 
--- | Parse one 64-bit big-endian floating point number.
+-- | Parse one 64-bit big-endian IEEE 754 floating-point number.
 anyFloat64be :: forall m. MonadEffect m => ParserT DataView m Number
 anyFloat64be = anyPrim BE (Proxy :: Proxy Float64)
 
--- | Parse one 64-bit little-endian floating point number.
+-- | Parse one 64-bit little-endian IEEE 754 floating-point number.
 anyFloat64le :: forall m. MonadEffect m => ParserT DataView m Number
 anyFloat64le = anyPrim LE (Proxy :: Proxy Float64)
 
@@ -186,22 +171,22 @@ anyFloat64le = anyPrim LE (Proxy :: Proxy Float64)
 -- |     satisfy LE (Proxy :: Proxy Int32) (_ == 3)
 -- |
 -- | or just use the convenience function `satisfyInt32le`, see below.
-satisfy :: forall a name m t
-             . BinaryValue a t
-            => BytesPerType a
-            => ShowArrayViewType a name
-            => IsSymbol name
-            => Show t
-            => MonadEffect m
-            => Endian
-            -> Proxy a
-            -> (t -> Boolean)
-            -> ParserT DataView m t
+satisfy
+  :: forall a name m t
+   . BinaryValue a t
+  => BytesPerType a
+  => ShowArrayViewType a name
+  => IsSymbol name
+  => Show t
+  => MonadEffect m
+  => Endian
+  -> Proxy a
+  -> (t -> Boolean)
+  -> ParserT DataView m t
 satisfy endian proxy f = tryRethrow do
   i <- anyPrim endian proxy
   if f i then pure i
-         else fail $ reflectSymbol (SProxy :: SProxy name) <>
-                     " " <> show i <> " did not satisfy predicate."
+  else fail "satisfy predicate failed"
 
 -- | Parse one 8-bit signed integer that satisfies the given predicate.
 satisfyInt8 :: forall m. MonadEffect m => (Int -> Boolean) -> ParserT DataView m Int
@@ -270,29 +255,32 @@ satisfyFloat64le = satisfy LE (Proxy :: Proxy Float64)
 -- |
 takeN :: forall m. MonadEffect m => ByteLength -> ParserT DataView m DataView
 takeN n = do
-  ParseState input (Position {line,column}) _ <- get
-  unless (n >= 0) $ fail $ "Cannot take negative number of bytes."
-  unless (column + n - 1 <= DV.byteLength input) $
-    fail $ "Cannot take " <> show n <> " bytes, only " <>
-      show (DV.byteLength input - column + 1) <> " bytes remain."
-  p <- lift $ liftEffect $ DV.part (DV.buffer input) (DV.byteOffset input + (column-1)) n
-  put $ ParseState input (Position {line,column:column+n}) true
-  pure p
+  ParseState input (Position { index }) _ <- getParserT
+  if (n < 0) then
+    fail $ "takeN cannot take negative number of bytes"
+  else if (index + n + 1 > DV.byteLength input) then
+    fail "takeN expected N bytes"
+  else do
+    p <- lift $ liftEffect $ DV.part (DV.buffer input) (DV.byteOffset input + index) n
+    stateParserT \_ -> Tuple p $ ParseState input (Position { line: 1, column: 1, index: index + n }) true
 
 -- | Take the rest of the input, however many bytes remain. Always succeeds.
 takeRest :: forall m. MonadEffect m => ParserT DataView m DataView
 takeRest = do
-  ParseState input (Position {line,column}) _ <- get
-  p <- lift $ liftEffect $ DV.part (DV.buffer input) (DV.byteOffset input + (column-1))
-                                                     (DV.byteLength input - (column-1))
-  put $ ParseState input (Position {line,column:DV.byteLength input + 1}) true
-  pure p
+  ParseState input (Position { index }) _ <- getParserT
+  p <- lift $ liftEffect $ DV.part (DV.buffer input) (DV.byteOffset input + index)
+    (DV.byteLength input - index)
+  stateParserT \_ -> Tuple p $ ParseState input (Position { line: 1, column: 1, index: DV.byteLength input + 1 }) true
 
--- | Parse succeeds at the end of the input DataView. Consumes no input.
+-- | Parse succeeds at the end of the input DataView.
 eof :: forall m. Monad m => ParserT DataView m Unit
 eof = do
-  ParseState input (Position {column}) _ <- get
-  unless (column > DV.byteLength input) $ fail "Expected end of DataView"
+  ParseState input (Position { index }) _ <- getParserT
+  if (index + 1 > DV.byteLength input) then do
+    -- We must consume so this combines correctly with notFollowedBy
+    consume
+  else do
+    fail "eof expected end of DataView"
 
 -- | The
 -- | [famous `match`](http://www.serpentine.com/blog/2014/05/31/attoparsec/#from-strings-to-buffers-and-cursors)
@@ -302,19 +290,13 @@ eof = do
 -- | was consumed while it was being parsed.
 match :: forall a m. MonadEffect m => ParserT DataView m a -> ParserT DataView m (Tuple DataView a)
 match p = do
-  ParseState input (Position {column:column0}) _ <- get
+  ParseState input (Position { index: index0 }) _ <- getParserT
   x <- p
-  ParseState _ (Position {column:column1}) _ <- get
-  part <- lift $ liftEffect $ DV.part (DV.buffer input) (DV.byteOffset input + (column0-1)) (column1-column0)
+  ParseState _ (Position { index: index1 }) _ <- getParserT
+  part <- lift $ liftEffect $ DV.part (DV.buffer input) (DV.byteOffset input + index0) (index1 - index0)
   pure $ Tuple part x
 
 -- ****************************** Notes ****************************************
---
--- The `initialPostion` in a `ParserT` is `Postion{line:1,column:1)`.
--- We keep `line` invariant and use `column-1` to denote the offset into the
--- `DataView`, that's why there are so many plus 1 and minus 1 operations
--- in this module.
--- https://www.cs.utexas.edu/users/EWD/transcriptions/EWD08xx/EWD831.html
 --
 -- We cannot have a primitive parser which parses a `DataView` and produces
 -- an `ArrayView` (a Javascript Typed Array). Javascript DataViews are
@@ -322,3 +304,8 @@ match p = do
 -- of the local machine. DataViews are intended to be used for I/O, ArrayViews
 -- are intended to be used internally for graphics in a process, and they're
 -- not intended to be both applied to the same ArrayBuffer.
+-- The exception: `Uint8Array`
+--
+-- The failure messages are all constant strings form performance reasons.
+-- If failure messages were constructed lazily then we could have more
+-- descriptive messages.

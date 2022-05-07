@@ -4,7 +4,7 @@
 
 ### Breaking changes
 
-- Build for PureScript v0.15.0.
+- Build for PureScript v0.15.0 with __parsing__ v9.0.0.
 
 ## v2.1.0 2021-11-24
 

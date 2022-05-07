@@ -7,17 +7,18 @@ import Data.ArrayBuffer.ArrayBuffer (empty) as AB
 import Data.ArrayBuffer.DataView as DataView
 import Data.Either (Either(..))
 import Data.List (fromFoldable)
+import Data.List as List
 import Data.Maybe (Maybe(..))
 import Data.Traversable (for_)
 import Data.Tuple (Tuple(..))
 import Data.UInt (fromInt)
 import Effect (Effect)
 import Effect.Console (logShow)
-import Test.Assert (assert')
-import Text.Parsing.Parser (ParserT, runParserT, parseErrorPosition, fail)
-import Text.Parsing.Parser.Combinators (manyTill)
-import Text.Parsing.Parser.DataView as DV
-import Text.Parsing.Parser.Pos (Position(..))
+import Parsing (ParserT, Position(..), fail, parseErrorPosition, runParserT)
+import Parsing.Combinators (many, manyTill)
+import Parsing.DataView (anyInt8)
+import Parsing.DataView as DV
+import Test.Assert (assert', assertEqual')
 
 parseTestT :: forall s a. Show a => Eq a => s -> a -> ParserT s Effect a -> Effect Unit
 parseTestT input expected p = do
@@ -32,19 +33,15 @@ parseFailT :: forall s a. s -> Position -> ParserT s Effect a -> Effect Unit
 parseFailT input failPos p = do
   result <- runParserT input p
   case result of
-    Right _ -> assert' ("ParseError expected at "  <> show failPos) false
+    Right _ -> assert' ("ParseError expected at " <> show failPos) false
     Left err -> do
       let pos = parseErrorPosition err
       assert' ("ParseError expected at " <> show failPos <> " but parser failed at " <> show pos)
-              (pos == failPos)
+        (pos == failPos)
       logShow $ show failPos
 
 mkPos :: Int -> Position
-mkPos n = mkPos' n 1
-
-mkPos' :: Int -> Int -> Position
-mkPos' column line = Position { column: column, line: line }
-
+mkPos n = Position { index: n, line: 1, column: 1 }
 
 main :: Effect Unit
 main = do
@@ -52,13 +49,13 @@ main = do
   -- Test input is DataView = [5,6,7,8,9]
   ab <- AB.empty 5
   let dv = DataView.whole ab
-  for_ [0,1,2,3,4] $ \i -> DataView.setInt8 dv i (i+5)
+  for_ [ 0, 1, 2, 3, 4 ] $ \i -> DataView.setInt8 dv i (i + 5)
   -- anyInt8
   parseTestT dv 5 DV.anyInt8
   -- manyTill eof
-  parseTestT dv (fromFoldable [5,6,7,8,9]) $ manyTill DV.anyInt8 DV.eof
+  parseTestT dv (fromFoldable [ 5, 6, 7, 8, 9 ]) $ manyTill DV.anyInt8 DV.eof
   -- manyTill satisfy
-  parseTestT dv (fromFoldable [5,6,7,8]) $ manyTill DV.anyInt8 (DV.satisfyInt8 (_ == 9))
+  parseTestT dv (fromFoldable [ 5, 6, 7, 8 ]) $ manyTill DV.anyInt8 (DV.satisfyInt8 (_ == 9))
   -- anyInt16be
   parseTestT dv 0x0506 DV.anyInt16be
   -- anyInt16le
@@ -68,7 +65,7 @@ main = do
   -- anyUint16le
   parseTestT dv (fromInt 0x0605) DV.anyUint16le
   -- fail on anyInt16le past end of DataView
-  parseFailT dv (mkPos 5) $ DV.anyInt16le *> DV.anyInt16le *> DV.anyInt16le
+  parseFailT dv (mkPos 4) $ DV.anyInt16le *> DV.anyInt16le *> DV.anyInt16le
   -- anyInt32be and anyInt8
   parseTestT dv (Tuple 0x05060708 0x09) $ do
     l <- DV.anyInt32be
@@ -105,7 +102,7 @@ main = do
       Right actual -> pure actual
       Left err -> fail $ show err
   -- fail on takeN past end of DataView
-  parseFailT dv (mkPos 1) $ DV.takeN 6
+  parseFailT dv (mkPos 0) $ DV.takeN 6
   -- takeRest then new parse on takeRest then anyInt8
   parseTestT dv 0x07 do
     _ <- DV.takeN 1
@@ -116,7 +113,7 @@ main = do
           Left err -> fail $ show err
           Right x -> pure x
   -- takeN then a new parse then fail on anyInt16le past end of DataView
-  parseFailT dv (mkPos 2) $ do
+  parseFailT dv (mkPos 1) $ do
     dv2 <- DV.takeN 1
     lift (runParserT dv2 DV.anyInt16le) >>= case _ of
       Left err -> fail $ show err
@@ -130,3 +127,13 @@ main = do
       assert' ("match failed " <> show r0 <> " " <> show r1) $ r0 == Just 5 && r1 == Just 6
       logShow $ show r0 <> " " <> show r1
     Left err -> assert' ("match failed " <> show err) false
+
+  do
+    ablarge <- AB.empty 200000
+    let dvlarge = DataView.whole ablarge
+    -- forE 0 (AB.byteLength ablarge - 1) \i -> void $ DataView.setInt8 dvlarge i i
+    x <- map List.length <$> runParserT dvlarge (many anyInt8)
+    assertEqual' "stack safety"
+      { actual: x
+      , expected: Right 200000
+      }
