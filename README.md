@@ -99,3 +99,10 @@ serialize and build `ArrayBuffer`s.
 * [MDN `ArrayBuffer`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer)
 * [MDN `DataView`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/DataView)
 
+## Development
+
+Run the tests with the development `spago` file:
+
+```
+spago -x spago-dev.dhall test
+```
