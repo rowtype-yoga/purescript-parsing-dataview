@@ -13,7 +13,7 @@ is similar to the built-in stream support of [__Megaparsec__](https://hackage.ha
 | Stream type | purescript-parsing | Megaparsec |
 |----|-----|----|
 | UTF-16 strings | String | Text < v2.0|
-| UTF-8 strings | __DataView__ *see below* | Text ≥ v2.0 |
+| UTF-8 strings | | Text ≥ v2.0 |
 | Listy strings | Token | String |
 | Binary blobs | __DataView__ | ByteString |
 
@@ -51,7 +51,7 @@ do
   result <- runParserT dataview $ replicateA n anyInt32be
 ```
 
-### Parse UTF8
+### Parse UTF-8
 
 Parse a UTF-8 `String` with a length prefix.
 
