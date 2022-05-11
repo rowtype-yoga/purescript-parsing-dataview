@@ -1,5 +1,9 @@
 # Changelog
 
+## v3.1.0
+
+Bugfix `takeN`.
+
 ## v3.0.0
 
 ### Breaking changes

@@ -118,6 +118,7 @@ main = do
     lift (runParserT dv2 DV.anyInt16le) >>= case _ of
       Left err -> fail $ show err
       Right x -> pure x
+  parseTestT dv unit $ DV.takeN 5 *> pure unit
 
   -- test match combinator
   runParserT dv (DV.match (DV.anyInt8 *> DV.anyInt8)) >>= case _ of

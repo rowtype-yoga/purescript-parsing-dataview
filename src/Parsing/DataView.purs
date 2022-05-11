@@ -1,5 +1,5 @@
--- | Primitive parsers for JavaScript `ArrayBuffer`s with the
--- | `ParserT` type and combinators in package __purescript-parsing__.
+-- | Primitive parsers for input `DataView`s with the
+-- | `ParserT` type and combinators in package __parsing__.
 -- | See the package README for usage examples.
 -- |
 -- | ### Mutable ArrayBuffer
@@ -9,10 +9,10 @@
 -- | which represents a range of a mutable
 -- | [__Data.ArrayBuffer.Types.ArrayBuffer__](https://pursuit.purescript.org/packages/purescript-arraybuffer-types/docs/Data.ArrayBuffer.Types#t:ArrayBuffer).
 -- |
--- | For operations for working with `ArrayBuffer` and `DataView`, see
+-- | For operations for working with `DataView`, see
 -- | module
 -- | [__Data.ArrayBuffer.DataView__](https://pursuit.purescript.org/packages/purescript-arraybuffer/docs/Data.ArrayBuffer.DataView)
--- | in package __purescript-arraybuffer__.
+-- | in package __arraybuffer__.
 -- |
 -- | Reading from an `ArrayBuffer` is an `Effect`ful activity, so
 -- | all parsers in this module must be run in a
@@ -257,8 +257,8 @@ takeN :: forall m. MonadEffect m => ByteLength -> ParserT DataView m DataView
 takeN n = do
   ParseState input (Position { index }) _ <- getParserT
   if (n < 0) then
-    fail $ "takeN cannot take negative number of bytes"
-  else if (index + n + 1 > DV.byteLength input) then
+    fail "takeN cannot take negative number of bytes"
+  else if (index + n > DV.byteLength input) then
     fail "takeN expected N bytes"
   else do
     p <- lift $ liftEffect $ DV.part (DV.buffer input) (DV.byteOffset input + index) n

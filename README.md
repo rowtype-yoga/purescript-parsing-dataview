@@ -5,12 +5,12 @@
 
 Primitive parsers for
 `DataView`s on JavaScript `ArrayBuffer`s with the package
-[__purescript-parsing__](https://pursuit.purescript.org/packages/purescript-parsing/).
+[__parsing__](https://pursuit.purescript.org/packages/purescript-parsing/).
 
-With this package, the input stream support of __purescript-parsing__
+With this package, the input stream support of __parsing__
 is similar to the built-in stream support of [__Megaparsec__](https://hackage.haskell.org/package/megaparsec):
 
-| Stream type | purescript-parsing | Megaparsec |
+| Stream type | parsing | Megaparsec |
 |----|-----|----|
 | UTF-16 strings | String | Text < v2.0|
 | UTF-8 strings | | Text ≥ v2.0 |
@@ -87,6 +87,8 @@ do
       Left err -> fail $ show err
       Right s  -> pure s
 ```
+
+You might also consider using [__web-encoding__](https://pursuit.purescript.org/packages/purescript-web-encoding) for UTF-8. It will work in *Node.js ≥ v11*.
 
 ## Serialization
 
