@@ -57,38 +57,30 @@ Parse a UTF-8 `String` with a length prefix.
 
 We give this as an example, rather than supporting it in the library, because
 it depends on
-[`Data.TextDecoding.decodeUtf8`](https://pursuit.purescript.org/packages/purescript-text-encoding/docs/Data.TextDecoding#v:decodeUtf8).
+[__web-encoding__](https://pursuit.purescript.org/packages/purescript-web-encoding) for UTF-8.
 
 ```purescript
-import Control.Monad.Trans.Class (lift)
-import Data.ArrayBuffer.Types (DataView, Uint8Array)
-import Data.ArrayBuffer.DataView (buffer, byteOffset, byteLength)
-import Data.ArrayBuffer.Typed (part)
-import Effect (Effect, liftEffect)
-import Text.Parsing.Parser (runParserT, fail)
-import Text.Parsing.Parser.DataView (anyUint32be, takeN)
+import Control.Monad.Except (ExceptT)
+import Data.ArrayBuffer.Cast (toUint8Array)
+import Effect.Exception (catchException, message)
+import Parsing (runParserT, liftExceptT)
+import Parsing.DataView (anyUint32be, takeN)
 import Data.UInt (toInt)
-import Data.Text.Decoding (decodeUtf8)
-
-
--- Make a `Uint8Array` Typed Array from a `DataView`. We can do this
--- for the case of `Uint8` because byte arrays are always aligned.
-mkUint8Array :: DataView -> Effect Uint8Array
-mkUint8Array dv = part (buffer dv) (byteOffset dv) (byteLength dv)
+import Web.Encoding.TextDecoder as TextDecoder
+import Web.Encoding.UtfLabel as UtfLabel
 
 do
-  result <- runParserT dataview do
+  textDecoder <- TextDecoder.new UtfLabel.utf8
+
+  result :: <- runParserT dataview do
     -- Parse a 32-bit big-endian length prefix for the length
     -- of the UTF-8 string in bytes.
     length      <- anyUint32be
     stringview  <- takeN $ toInt length
-    stringarray <- lift $ liftEffect $ mkUint8Array stringview
-    case decodeUtf8 stringarray of
-      Left err -> fail $ show err
-      Right s  -> pure s
+    stringarray <- lift $ liftEffect $ toUint8Array stringview
+    liftExceptT $ ExceptT $ catchException (Left <<< message) do
+      Right <$> TextDecoder.decode stringarray
 ```
-
-You might also consider using [__web-encoding__](https://pursuit.purescript.org/packages/purescript-web-encoding) for UTF-8. It will work in *Node.js ≥ v11*.
 
 ## Serialization
 

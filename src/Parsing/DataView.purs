@@ -1,5 +1,10 @@
--- | Primitive parsers for input `DataView`s with the
--- | `ParserT` type and combinators in package __parsing__.
+-- | Primitive parsers for input type `DataView`.
+-- |
+-- | All of these primitive parsers will consume when they succeed.
+-- |
+-- | All of these primitive parsers will not consume and will automatically
+-- | backtrack when they fail.
+-- |
 -- | See the package README for usage examples.
 -- |
 -- | ### Mutable ArrayBuffer
