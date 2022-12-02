@@ -64,22 +64,21 @@ import Control.Monad.Except (ExceptT)
 import Data.ArrayBuffer.Cast (toUint8Array)
 import Effect.Exception (catchException, message)
 import Parsing (runParserT, liftExceptT)
-import Parsing.DataView (anyUint32be, takeN)
-import Data.UInt (toInt)
+import Parsing.DataView (anyInt32be, takeN)
 import Web.Encoding.TextDecoder as TextDecoder
 import Web.Encoding.UtfLabel as UtfLabel
 
 do
   textDecoder <- TextDecoder.new UtfLabel.utf8
 
-  result :: <- runParserT dataview do
-    -- Parse a 32-bit big-endian length prefix for the length
+  result <- runParserT dataview do
+    -- First parse a 32-bit big-endian length prefix for the length
     -- of the UTF-8 string in bytes.
-    length      <- anyUint32be
-    stringview  <- takeN $ toInt length
+    length      <- anyInt32be
+    stringview  <- takeN length
     stringarray <- lift $ liftEffect $ toUint8Array stringview
-    liftExceptT $ ExceptT $ catchException (Left <<< message) do
-      Right <$> TextDecoder.decode stringarray
+    liftExceptT $ ExceptT $ catchException (pure <<< Left <<< message) do
+      Right <$> TextDecoder.decode stringarray textDecoder
 ```
 
 ## Serialization

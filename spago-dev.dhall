@@ -18,7 +18,8 @@ in conf //
       , "console"
       , "foldable-traversable"
       , "lists"
-      , "psci-support"
       , "either"
+      , "web-encoding"
+      , "exceptions"
       ]
   }

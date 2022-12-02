@@ -2,8 +2,10 @@ module Test.Main where
 
 import Prelude
 
+import Control.Monad.Except (ExceptT(..))
 import Control.Monad.Trans.Class (lift)
-import Data.ArrayBuffer.ArrayBuffer (empty) as AB
+import Data.ArrayBuffer.ArrayBuffer as AB
+import Data.ArrayBuffer.Cast (fromUint8Array, toUint8Array)
 import Data.ArrayBuffer.DataView as DataView
 import Data.Either (Either(..))
 import Data.List (fromFoldable)
@@ -13,12 +15,17 @@ import Data.Traversable (for_)
 import Data.Tuple (Tuple(..))
 import Data.UInt (fromInt)
 import Effect (Effect)
+import Effect.Class (liftEffect)
 import Effect.Console (logShow)
-import Parsing (ParserT, Position(..), fail, parseErrorPosition, runParserT)
+import Effect.Exception (catchException, message)
+import Parsing (ParserT, Position(..), fail, liftExceptT, parseErrorPosition, runParserT)
 import Parsing.Combinators (many, manyTill)
 import Parsing.DataView (anyInt8)
 import Parsing.DataView as DV
 import Test.Assert (assert', assertEqual')
+import Web.Encoding.TextDecoder as TextDecoder
+import Web.Encoding.TextEncoder as TextEncoder
+import Web.Encoding.UtfLabel as UtfLabel
 
 parseTestT :: forall s a. Show a => Eq a => s -> a -> ParserT s Effect a -> Effect Unit
 parseTestT input expected p = do
@@ -137,4 +144,28 @@ main = do
     assertEqual' "stack safety"
       { actual: x
       , expected: Right 200000
+      }
+
+  do
+    let
+      teststring = "test string 👓"
+
+    textDecoder <- TextDecoder.new UtfLabel.utf8
+
+    textEncoder <- TextEncoder.new
+
+    let testarray = TextEncoder.encode teststring textEncoder
+
+    testview <- fromUint8Array testarray
+
+    result <- runParserT testview do
+      let length = DataView.byteLength testview
+      stringview <- DV.takeN length
+      stringarray <- lift $ liftEffect $ toUint8Array stringview
+      liftExceptT $ ExceptT $ catchException (pure <<< Left <<< message) do
+        Right <$> TextDecoder.decode stringarray textDecoder
+
+    assertEqual' "UTF-8 decoding example"
+      { expected: Right teststring
+      , actual: result
       }
