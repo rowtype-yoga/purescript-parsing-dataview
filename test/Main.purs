@@ -8,6 +8,7 @@ import Data.ArrayBuffer.ArrayBuffer as AB
 import Data.ArrayBuffer.Cast (fromUint8Array, toUint8Array)
 import Data.ArrayBuffer.DataView as DataView
 import Data.Either (Either(..))
+import Data.Enum (fromEnum)
 import Data.List (fromFoldable)
 import Data.List as List
 import Data.Maybe (Maybe(..))
@@ -20,8 +21,9 @@ import Effect.Console (logShow)
 import Effect.Exception (catchException, message)
 import Parsing (ParserT, Position(..), fail, liftExceptT, parseErrorPosition, runParserT)
 import Parsing.Combinators (many, manyTill)
-import Parsing.DataView (anyInt8, anyTill, satisfyInt8)
+import Parsing.DataView (anyInt8, anyTill, eof, satisfyInt8)
 import Parsing.DataView as DV
+import Parsing.DataView.Basic (anyCodePointUTF8)
 import Test.Assert (assert', assertEqual')
 import Web.Encoding.TextDecoder as TextDecoder
 import Web.Encoding.TextEncoder as TextEncoder
@@ -181,4 +183,29 @@ main = do
     assertEqual' "anyTill"
       { expected: Right 2
       , actual: DataView.byteLength <$> result
+      }
+
+  do
+    -- Test one code point from each byte group
+    -- a 97
+    -- λ 955
+    -- 月 0x6708
+    -- 👓 0x1F453
+    let teststring = "aλ月👓a"
+    textEncoder <- TextEncoder.new
+    let testarray = TextEncoder.encode teststring textEncoder
+    testview <- fromUint8Array testarray
+
+    result <- (map <<< map <<< map) fromEnum $ runParserT testview do
+      c0 <- anyCodePointUTF8
+      c1 <- anyCodePointUTF8
+      c2 <- anyCodePointUTF8
+      c3 <- anyCodePointUTF8
+      c4 <- anyCodePointUTF8
+      eof
+      pure [ c0, c1, c2, c3, c4 ]
+
+    assertEqual' "anyCodePointUTF8"
+      { expected: Right [ 97, 955, 0x6708, 0x1F453, 97 ]
+      , actual: result
       }

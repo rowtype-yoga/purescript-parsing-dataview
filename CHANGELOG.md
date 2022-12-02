@@ -2,7 +2,8 @@
 
 ## Unreleased
 
-New combinator: `anyTill`.
+- New combinator: `anyTill`
+- New parser: `anyCodePointUTF8`
 
 ## v3.1.0
 
