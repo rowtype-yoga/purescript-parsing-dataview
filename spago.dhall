@@ -9,6 +9,7 @@
   , "maybe"
   , "parsing"
   , "prelude"
+  , "tailrec"
   , "transformers"
   , "tuples"
   , "uint"

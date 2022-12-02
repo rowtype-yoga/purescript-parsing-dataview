@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+New combinator: `anyTill`.
+
 ## v3.1.0
 
 Bugfix `takeN`.

@@ -20,7 +20,7 @@ import Effect.Console (logShow)
 import Effect.Exception (catchException, message)
 import Parsing (ParserT, Position(..), fail, liftExceptT, parseErrorPosition, runParserT)
 import Parsing.Combinators (many, manyTill)
-import Parsing.DataView (anyInt8)
+import Parsing.DataView (anyInt8, anyTill, satisfyInt8)
 import Parsing.DataView as DV
 import Test.Assert (assert', assertEqual')
 import Web.Encoding.TextDecoder as TextDecoder
@@ -168,4 +168,17 @@ main = do
     assertEqual' "UTF-8 decoding example"
       { expected: Right teststring
       , actual: result
+      }
+
+  do
+    result <- runParserT dv do
+      Tuple pre _ <- anyTill do
+        _ <- satisfyInt8 (_ == 7)
+        _ <- satisfyInt8 (_ == 8)
+        pure unit
+      pure pre
+
+    assertEqual' "anyTill"
+      { expected: Right 2
+      , actual: DataView.byteLength <$> result
       }

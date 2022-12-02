@@ -35,6 +35,7 @@ module Parsing.DataView
   , takeRest
   , eof
   , match
+  , anyTill
   , anyPrim
   , anyInt8
   , anyInt16be
@@ -69,9 +70,10 @@ module Parsing.DataView
 
 import Prelude
 
+import Control.Monad.Rec.Class (Step(..), tailRecM)
 import Control.Monad.Trans.Class (lift)
 import Data.ArrayBuffer.DataView (Endian(LE, BE))
-import Data.ArrayBuffer.DataView (byteLength, byteOffset, get, part, buffer) as DV
+import Data.ArrayBuffer.DataView (buffer, byteLength, byteOffset, get, part) as DV
 import Data.ArrayBuffer.Types (DataView, Int16, Int32, Int8, Uint16, Uint32, Uint8, Float32, Float64, ByteLength)
 import Data.ArrayBuffer.ValueMapping (class BytesPerType, class BinaryValue, class ShowArrayViewType, byteWidth)
 import Data.Float32 as Float32
@@ -81,7 +83,7 @@ import Data.Tuple (Tuple(..))
 import Data.UInt (UInt)
 import Effect.Class (class MonadEffect, liftEffect)
 import Parsing (ParseState(..), ParserT, Position(..), consume, fail, getParserT, stateParserT)
-import Parsing.Combinators (tryRethrow)
+import Parsing.Combinators (alt, try, tryRethrow)
 import Type.Proxy (Proxy(..))
 
 -- | Parse one fixed-bit-width `Data.ArrayBuffer.Types.ArrayViewType` primitive
@@ -300,6 +302,41 @@ match p = do
   ParseState _ (Position { index: index1 }) _ <- getParserT
   part <- lift $ liftEffect $ DV.part (DV.buffer input) (DV.byteOffset input + index0) (index1 - index0)
   pure $ Tuple part x
+
+-- | Combinator which finds the first position in the input `DataView` where the
+-- | phrase can parse. Returns both the
+-- | parsed result and the unparsable input section searched before the parse.
+-- | Will fail if no section of the input is parseable. To backtrack the input
+-- | stream on failure, combine with `tryRethrow`.
+-- |
+-- | This combinator is equivalent to `manyTill_ anyInt8`, but it will be
+-- | faster because it returns a slice of the input `DataView` for the
+-- | section preceding the parse instead of a `List Int`.
+-- |
+-- | Be careful not to look too far
+-- | ahead; if the phrase parser looks to the end of the input then `anyTill`
+-- | could be *O(n²)*.
+anyTill
+  :: forall m a
+   . MonadEffect m
+  => ParserT DataView m a
+  -> ParserT DataView m (Tuple DataView a)
+anyTill p = do
+  ParseState input1 (Position { index: index0 }) _ <- getParserT
+  Tuple index1 t <- tailRecM go unit
+  part <- lift $ liftEffect $ DV.part (DV.buffer input1) (DV.byteOffset input1 + index0) (index1 - index0)
+  pure $ Tuple part t
+  where
+  go unit = alt
+    ( do
+        ParseState _ (Position { index: index1 }) _ <- getParserT
+        t <- try p
+        pure $ Done $ Tuple index1 t
+    )
+    ( do
+        _ <- anyInt8
+        pure $ Loop unit
+    )
 
 -- ****************************** Notes ****************************************
 --
