@@ -19,5 +19,5 @@
 , packages = ./packages.dhall
 , sources = [ "src/**/*.purs" ]
 , license = "BSD-2-Clause"
-, repository = "https://github.com/jamesdbrock/purescript-parsing-dataview"
+, repository = "https://github.com/rowtype-yoga/purescript-parsing-dataview"
 }

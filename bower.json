@@ -5,7 +5,7 @@
     ],
     "repository": {
         "type": "git",
-        "url": "https://github.com/jamesdbrock/purescript-parsing-dataview"
+        "url": "https://github.com/rowtype-yoga/purescript-parsing-dataview"
     },
     "ignore": [
         "**/.*",

@@ -1,9 +1,11 @@
 # Changelog
 
-## Unreleased
+## v3.2.0
 
+- Build for PureScript v0.15.4
 - New combinator: `anyTill`
 - New parser: `anyCodePointUTF8`
+- Move to rowtype-yoga org
 
 ## v3.1.0
 

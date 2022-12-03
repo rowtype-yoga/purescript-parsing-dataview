@@ -1,7 +1,8 @@
 # purescript-parsing-dataview
 
-[![CI](https://github.com/jamesdbrock/purescript-parsing-dataview/workflows/CI/badge.svg?branch=master)](https://github.com/jamesdbrock/purescript-parsing-dataview/actions)
+[![CI](https://github.com/rowtype-yoga/purescript-parsing-dataview/workflows/CI/badge.svg?branch=master)](https://github.com/rowtype-yoga/purescript-parsing-dataview/actions)
 [![Pursuit](http://pursuit.purescript.org/packages/purescript-parsing-dataview/badge)](http://pursuit.purescript.org/packages/purescript-parsing-dataview/)
+[![Maintainer: jamesdbrock](https://img.shields.io/badge/maintainer-jamesdbrock-teal.svg)](https://github.com/jamesdbrock)
 
 Primitive parsers for
 `DataView`s on JavaScript `ArrayBuffer`s with the package
@@ -13,7 +14,7 @@ is similar to the built-in stream support of [__Megaparsec__](https://hackage.ha
 | Stream type | parsing | Megaparsec |
 |----|-----|----|
 | UTF-16 strings | String | Text < v2.0|
-| UTF-8 strings | | Text ≥ v2.0 |
+| UTF-8 strings | __DataView__ | Text ≥ v2.0 |
 | Listy strings | Token | String |
 | Binary blobs | __DataView__ | ByteString |
 
@@ -28,8 +29,8 @@ Parse values out of a `dataview :: Data.ArrayBuffer.Types.DataView`. All
 Parse two big-endian IEEE 754 double-precision `Number`s.
 
 ```purescript
-import Text.Parsing.Parser (runParserT)
-import Text.Parsing.Parser.DataView (anyFloat64be)
+import Parsing (runParserT)
+import Parsing.DataView (anyFloat64be)
 
 do
   result <- runParserT dataview do
@@ -43,8 +44,8 @@ do
 Parse an array of `n` 32-bit big-endian signed `Int`s.
 
 ```purescript
-import Text.Parsing.Parser (runParserT)
-import Text.Parsing.Parser.DataView (anyUint32be)
+import Parsing (runParserT)
+import Parsing.DataView (anyUint32be)
 import Data.Unfoldable (replicateA)
 
 do
