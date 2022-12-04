@@ -29,19 +29,23 @@ anyCodePointUTF8 = tryRethrow do
   c0 <- toInt <$> anyUint8
   if c0 < 128 then do
     liftMaybe (\_ -> "Invalid CodePoint " <> show c0) (toEnum c0)
+  else if c0 < 192 then fail "Invalid UTF-8 encoding"
   else if c0 < 224 then do
     c1 <- toInt <$> anyUint8
+    if c1 < 128 || c1 > 191 then fail "Invalid UTF-8 encoding" else pure unit
     let codepoint = (64 * (c0 `mod` 32)) + (c1 `mod` 64)
     liftMaybe (\_ -> "Invalid CodePoint " <> show codepoint) (toEnum codepoint)
   else if c0 < 240 then do
     c1 <- toInt <$> anyUint8
     c2 <- toInt <$> anyUint8
+    if c1 < 128 || c1 > 191 || c2 < 128 || c2 > 191 then fail "Invalid UTF-8 encoding" else pure unit
     let codepoint = (4096 * (c0 `mod` 16)) + (64 * (c1 `mod` 64)) + (c2 `mod` 64)
     liftMaybe (\_ -> "Invalid CodePoint " <> show codepoint) (toEnum codepoint)
   else if c0 < 248 then do
     c1 <- toInt <$> anyUint8
     c2 <- toInt <$> anyUint8
     c3 <- toInt <$> anyUint8
+    if c1 < 128 || c1 > 191 || c2 < 128 || c2 > 191 || c3 < 128 || c3 > 191 then fail "Invalid UTF-8 encoding" else pure unit
     let codepoint = (262144 * (c0 `mod` 8)) + (4096 * (c1 `mod` 64)) + (64 * (c2 `mod` 64)) + (c3 `mod` 64)
     liftMaybe (\_ -> "Invalid CodePoint " <> show codepoint) (toEnum codepoint)
-  else fail "Invalid first code point"
+  else fail "Invalid UTF-8 encoding"

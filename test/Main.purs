@@ -7,6 +7,8 @@ import Control.Monad.Trans.Class (lift)
 import Data.ArrayBuffer.ArrayBuffer as AB
 import Data.ArrayBuffer.Cast (fromUint8Array, toUint8Array)
 import Data.ArrayBuffer.DataView as DataView
+import Data.ArrayBuffer.Typed (fromArray)
+import Data.ArrayBuffer.Types (Uint8Array)
 import Data.Either (Either(..))
 import Data.Enum (fromEnum)
 import Data.List (fromFoldable)
@@ -19,7 +21,7 @@ import Effect (Effect)
 import Effect.Class (liftEffect)
 import Effect.Console (logShow)
 import Effect.Exception (catchException, message)
-import Parsing (ParserT, Position(..), fail, liftExceptT, parseErrorPosition, runParserT)
+import Parsing (ParseError(..), ParserT, Position(..), fail, liftExceptT, parseErrorPosition, runParserT)
 import Parsing.Combinators (many, manyTill)
 import Parsing.DataView (anyInt8, anyTill, eof, satisfyInt8)
 import Parsing.DataView as DV
@@ -205,7 +207,25 @@ main = do
       eof
       pure [ c0, c1, c2, c3, c4 ]
 
-    assertEqual' "anyCodePointUTF8"
+    assertEqual' "anyCodePointUTF8 basic"
       { expected: Right [ 97, 955, 0x6708, 0x1F453, 97 ]
+      , actual: result
+      }
+
+  do
+    test :: Uint8Array <- fromArray (map fromInt [ 0x00BF ])
+    testv <- fromUint8Array test
+    result <- runParserT testv anyCodePointUTF8
+    assertEqual' "anyCodePointUTF8 invalid 1"
+      { expected: Left (ParseError "Invalid UTF-8 encoding" (Position { index: 0, column: 1, line: 1 }))
+      , actual: result
+      }
+
+  do
+    test :: Uint8Array <- fromArray (map fromInt [ 0x00C0, 0 ])
+    testv <- fromUint8Array test
+    result <- runParserT testv anyCodePointUTF8
+    assertEqual' "anyCodePointUTF8 invalid 2"
+      { expected: Left (ParseError "Invalid UTF-8 encoding" (Position { index: 0, column: 1, line: 1 }))
       , actual: result
       }
